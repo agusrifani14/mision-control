@@ -21,6 +21,7 @@
         <button class="nav-btn" data-tab="activity">Activity</button>
         <button class="nav-btn" data-tab="memory">Memory</button>
         <button class="nav-btn" data-tab="office">Visual Office</button>
+        <button class="nav-btn" data-tab="deploy">Deploy & Git</button>
       </nav>
       <div class="sidebar-footer">
         <div class="live-indicator"><span class="pulse"></span> LIVE 5s</div>
@@ -99,12 +100,29 @@
               <div class="room-title"><span>LOUNGE</span><small>Idle and available</small></div>
               <div class="office-scene"><div class="tv">LIVE</div><div class="sofa"></div><div class="coffee">●</div><div id="lounge-agents" class="agent-zone"></div></div>
             </article>
+            <article class="room dev-room">
+              <div class="room-title"><span>DEV / ENGINEERING LAB</span><small>Bugfix, Code & Deployment</small></div>
+              <div class="office-scene"><div class="server-rack"></div><div class="terminal-screen">TESTS</div><div id="dev-agents" class="agent-zone"></div></div>
+            </article>
           </div>
           <aside class="office-side">
             <div class="card"><h3>Agent Detail</h3><div id="agent-detail" class="detail-empty">Select agent from room.</div></div>
             <div class="card"><h3>Live Activity</h3><div id="office-activity" class="activity-list"></div></div>
             <div class="card"><h3>Connected Channels</h3><div id="office-channels-list" class="activity-list"></div></div>
           </aside>
+        </div>
+      </section>
+
+      <section id="tab-deploy" class="tab-pane">
+        <div class="metrics-grid">
+          <div class="card metric"><div class="label">Branch</div><div class="val" id="deploy-branch">-</div></div>
+          <div class="card metric"><div class="label">Git Status</div><div class="val" id="deploy-status">-</div></div>
+          <div class="card metric"><div class="label">Head Commit</div><div class="val" id="deploy-head" style="font-family:monospace;font-size:20px;">-</div></div>
+          <div class="card metric"><div class="label">E-Commerce Target</div><div class="val" id="deploy-target" style="font-size:18px;">-</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Recent Git Commits</h3><span id="commits-count" class="badge">0</span></div>
+          <div class="table-wrap"><table id="commits-table"><thead><tr><th>Hash</th><th>Author</th><th>Time</th><th>Subject</th></tr></thead><tbody></tbody></table></div>
         </div>
       </section>
     </main>

@@ -115,8 +115,10 @@ function render(data) {
 
   const wsZone = document.getElementById('workspace-agents');
   const lgZone = document.getElementById('lounge-agents');
+  const devZone = document.getElementById('dev-agents');
   wsZone.innerHTML = '';
   lgZone.innerHTML = '';
+  devZone.innerHTML = '';
 
   const avatarIcons = { commander: '👾', engineer: '🛠️', tech_worker: '🤖' };
 
@@ -145,12 +147,14 @@ function render(data) {
       `;
     });
 
-    if (agent.room === 'Workspace') wsZone.appendChild(sprite);
+    if (agent.room === 'Dev Lab') devZone.appendChild(sprite);
+    else if (agent.room === 'Workspace') wsZone.appendChild(sprite);
     else lgZone.appendChild(sprite);
   });
 
   if (!wsZone.children.length) wsZone.innerHTML = '<span class="detail-empty">No active agents in Workspace.</span>';
-  if (!lgZone.children.length) lgZone.innerHTML = '<span class="detail-empty">No idle agents in Lounge.</span>';
+  if (!lgZone.children.length) lgZone.innerHTML = '<span class="detail-empty">No idle or unknown agents in Lounge.</span>';
+  if (!devZone.children.length) devZone.innerHTML = '<span class="detail-empty">No verified dev task running.</span>';
 
   // Office Activity Feed
   const actList = document.getElementById('office-activity');
@@ -170,6 +174,18 @@ function render(data) {
       <small>Status: ${esc(c.status)} (${esc(c.session_count)} session)</small>
     </div>
   `).join('') || '<span class="detail-empty">No connected channels</span>';
+
+  // Deploy & Git Status
+  const dep = data.deploy || {};
+  document.getElementById('deploy-branch').textContent = dep.branch || 'Unknown';
+  document.getElementById('deploy-status').textContent = dep.status || 'Not Available';
+  document.getElementById('deploy-head').textContent = dep.head_commit || 'Not Available';
+  document.getElementById('deploy-target').textContent = dep.deployment_target || 'E-Commerce Core';
+
+  const commits = dep.recent_commits || [];
+  document.getElementById('commits-count').textContent = commits.length;
+  const commitsBody = document.querySelector('#commits-table tbody');
+  commitsBody.innerHTML = commits.length ? commits.map(c => row([`<code>${esc(c.hash)}</code>`, c.author, c.time, c.subject])).join('') : '<tr><td colspan="4" class="empty-state">No recent git commits found</td></tr>';
 }
 
 refreshBtn.addEventListener('click', loadData);

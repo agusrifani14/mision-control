@@ -82,5 +82,9 @@ th { color: var(--muted); font-weight: 500; font-size: 12px; }
 .detail-empty { color: var(--muted); font-size: 12px; font-style: italic; }
 .activity-list { display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; }
 .act-item { background: #11141e; border-left: 3px solid var(--accent); padding: 6px 10px; font-size: 11px; border-radius: 0 4px 4px 0; }
-.act-item small { color: var(--muted); display: block; }
+.server-rack { position: absolute; left: 16px; top: 12px; width: 40px; height: 140px; background: #1a1e2b; border: 2px solid #2e3852; border-radius: 4px; display: flex; flex-direction: column; gap: 6px; padding: 6px 4px; }
+.server-rack::after { content: "● ● ●"; font-size: 8px; color: var(--green); letter-spacing: 2px; }
+.terminal-screen { position: absolute; right: 20px; top: 14px; width: 60px; height: 36px; background: #0b0d13; border: 2px solid var(--accent); color: var(--green); font-family: monospace; font-size: 8px; display: flex; align-items: center; justify-content: center; }
+.dev-room { border-color: rgba(88, 166, 255, 0.4); }
+
 

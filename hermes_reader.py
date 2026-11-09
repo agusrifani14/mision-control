@@ -86,6 +86,38 @@ def channels():
     ]}
 
 
+def git_deploy_monitor():
+    repo = Path(__file__).resolve().parent
+    try:
+        import subprocess
+        branch_res = subprocess.run(["git", "-C", str(repo), "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True, timeout=5)
+        branch = branch_res.stdout.strip() if branch_res.returncode == 0 else "Unknown"
+
+        log_res = subprocess.run(["git", "-C", str(repo), "log", "-n", "5", "--format=%h|%an|%ar|%s"], capture_output=True, text=True, timeout=5)
+        commits = []
+        if log_res.returncode == 0 and log_res.stdout.strip():
+            for line in log_res.stdout.strip().split("\n"):
+                parts = line.split("|", 3)
+                if len(parts) == 4:
+                    commits.append({"hash": parts[0], "author": parts[1], "time": parts[2], "subject": parts[3]})
+
+        status_res = subprocess.run(["git", "-C", str(repo), "status", "--porcelain"], capture_output=True, text=True, timeout=5)
+        dirty_lines = [l for l in status_res.stdout.strip().split("\n") if l] if status_res.returncode == 0 else []
+
+        return {
+            "available": True,
+            "branch": branch,
+            "head_commit": commits[0]["hash"] if commits else "Unknown",
+            "recent_commits": commits,
+            "dirty_count": len(dirty_lines),
+            "status": "Clean" if len(dirty_lines) == 0 else f"{len(dirty_lines)} modified file(s)",
+            "deployment_target": "E-Commerce Core / Local",
+            "health": "Healthy",
+        }
+    except Exception:
+        return unavailable()
+
+
 def process_alive(pid):
     if not isinstance(pid, int) or pid <= 0:
         return False
@@ -111,16 +143,20 @@ def agents():
             pid = item.get("pid")
             alive = process_alive(pid)
             state = "Working" if alive else "Unknown"
+            role = item.get("role") or "Not Available"
+            task = item.get("current_task") or "Not Available"
+            is_dev = any(k in f"{ident} {role} {task}".lower() for k in ("dev", "code", "engineer", "build", "bug", "deploy", "fix"))
+            room = "Dev Lab" if state == "Working" and is_dev else ("Workspace" if state == "Working" else "Lounge")
             items.append({
                 "name": item.get("name") or ident,
-                "role": item.get("role") or "Not Available",
+                "role": role,
                 "state": state,
-                "room": "Workspace" if state == "Working" else "Unknown",
+                "room": room,
                 "pid": pid,
                 "model": item.get("model") or "Not Available",
-                "current_task": item.get("current_task") or "Not Available",
+                "current_task": task,
                 "recent_activity": item.get("recent_activity") or "Not Available",
-                "avatar": "tech_worker",
+                "avatar": "engineer" if is_dev else "tech_worker",
             })
     return {"available": bool(processes["available"] or ledger["available"]), "items": items}
 
@@ -128,15 +164,23 @@ def agents():
 def main():
     tasks, sessions, workers = sqlite_rows("kanban.db", "tasks"), sqlite_rows("state.db", "sessions"), sqlite_rows("state.db", "worker_executions")
     agent_data, channel_data = agents(), channels()
+    deploy_data = git_deploy_monitor()
     result = {
-        "dashboard": {"source_health": {"kanban": tasks["available"], "sessions": sessions["available"], "workers": workers["available"], "processes": read_json("processes.json")["available"], "cron": (HOME / "cron").is_dir()}, "total_tasks": len(tasks["items"]), "session_count": len(sessions["items"]), "worker_count": len(workers["items"]), "agent_count": len(agent_data["items"]), "channel_count": len(channel_data["items"])},
+        "dashboard": {"source_health": {"kanban": tasks["available"], "sessions": sessions["available"], "workers": workers["available"], "processes": read_json("processes.json")["available"], "cron": (HOME / "cron").is_dir(), "git": deploy_data["available"]}, "total_tasks": len(tasks["items"]), "session_count": len(sessions["items"]), "worker_count": len(workers["items"]), "agent_count": len(agent_data["items"]), "channel_count": len(channel_data["items"])},
         "agents": agent_data,
-        "crew_summary": {state.lower(): sum(1 for agent in agent_data["items"] if agent["state"] == state) for state in ("Working", "Idle", "Offline", "Unknown")},
+        "crew_summary": {
+            "working": sum(1 for a in agent_data["items"] if a["state"] == "Working"),
+            "dev_lab": sum(1 for a in agent_data["items"] if a["room"] == "Dev Lab"),
+            "idle": sum(1 for a in agent_data["items"] if a["state"] == "Idle"),
+            "offline": sum(1 for a in agent_data["items"] if a["state"] == "Offline"),
+            "unknown": sum(1 for a in agent_data["items"] if a["state"] == "Unknown"),
+        },
         "channels": channel_data,
         "tasks": tasks,
         "calendar": cron_jobs(),
         "activity": {"available": workers["available"] or sessions["available"], "items": (workers["items"] + sessions["items"])[:50]},
         "memory": safe_files("memories"),
+        "deploy": deploy_data,
     }
     print(json.dumps(result, default=str))
 
