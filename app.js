@@ -15,17 +15,31 @@ tabs.forEach(btn => {
   });
 });
 
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function badge(status) {
   const s = String(status || 'Unknown').toLowerCase();
   let cls = 'status-na';
   if (s === 'working' || s === 'active') cls = 'status-working';
   else if (s === 'idle' || s === 'pending') cls = 'status-idle';
   else if (s === 'offline' || s === 'done' || s === 'completed') cls = 'status-offline';
-  return `<span class="status-badge ${cls}">${status || 'Not Available'}</span>`;
+  return `<span class="status-badge ${cls}">${esc(status || 'Not Available')}</span>`;
 }
 
 function row(cells) {
-  return `<tr>${cells.map(c => `<td>${c !== undefined && c !== null && c !== '' ? c : '<span class="status-badge status-na">Not Available</span>'}</td>`).join('')}</tr>`;
+  return `<tr>${cells.map(c => {
+    if (c === undefined || c === null || c === '') return '<td><span class="status-badge status-na">Not Available</span></td>';
+    if (typeof c === 'string' && c.startsWith('<span class="status-badge')) return `<td>${c}</td>`;
+    return `<td>${esc(c)}</td>`;
+  }).join('')}</tr>`;
 }
 
 async function loadData() {
@@ -61,7 +75,7 @@ function render(data) {
   const agents = (data.agents && data.agents.items) || [];
   document.getElementById('agents-count').textContent = agents.length;
   const agentsBody = document.querySelector('#agents-table tbody');
-  agentsBody.innerHTML = agents.length ? agents.map(a => row([a.name, a.role, badge(a.state), a.pid, a.model])).join('') : '<tr><td colspan="5" class="empty-state">No agents currently running</td></tr>';
+  agentsBody.innerHTML = agents.length ? agents.map(a => row([a.name, a.role, a.state, a.pid, a.model])).join('') : '<tr><td colspan="5" class="empty-state">No agents currently running</td></tr>';
 
   // Tasks
   const tasks = (data.tasks && data.tasks.items) || [];
@@ -87,8 +101,8 @@ function render(data) {
   const memList = document.getElementById('memory-list');
   memList.innerHTML = mem.length ? mem.map(m => `
     <div class="memory-item">
-      <h4>${m.name}</h4>
-      <pre>${m.content || 'Empty'}</pre>
+      <h4>${esc(m.name)}</h4>
+      <pre>${esc(m.content || 'Empty')}</pre>
     </div>
   `).join('') : '<div class="empty-state">No persistent memory files found in memories/</div>';
 
@@ -108,24 +122,25 @@ function render(data) {
 
   agents.forEach(agent => {
     const icon = avatarIcons[agent.avatar] || '👤';
+    const stateStr = String(agent.state || 'unknown').toLowerCase();
     const sprite = document.createElement('div');
-    sprite.className = `agent-sprite ${agent.state.toLowerCase()}`;
+    sprite.className = `agent-sprite ${stateStr}`;
     sprite.innerHTML = `
       <div class="sprite-icon">${icon}</div>
-      <div class="sprite-name" title="${agent.name}">${agent.name}</div>
+      <div class="sprite-name" title="${esc(agent.name)}">${esc(agent.name)}</div>
       ${badge(agent.state)}
     `;
     sprite.addEventListener('click', () => {
       document.getElementById('agent-detail').innerHTML = `
         <div style="display:flex;flex-direction:column;gap:8px;">
           <div style="font-size:24px;text-align:center;">${icon}</div>
-          <h4 style="color:var(--accent);">${agent.name}</h4>
-          <p><strong>Role:</strong> ${agent.role}</p>
+          <h4 style="color:var(--accent);">${esc(agent.name)}</h4>
+          <p><strong>Role:</strong> ${esc(agent.role)}</p>
           <p><strong>Status:</strong> ${badge(agent.state)}</p>
-          <p><strong>Room:</strong> ${agent.room}</p>
-          <p><strong>Model:</strong> ${agent.model || 'Unknown'}</p>
-          <p><strong>Task:</strong> ${agent.current_task || 'None'}</p>
-          <p><strong>Activity:</strong> <small>${agent.recent_activity || 'None'}</small></p>
+          <p><strong>Room:</strong> ${esc(agent.room)}</p>
+          <p><strong>Model:</strong> ${esc(agent.model || 'Unknown')}</p>
+          <p><strong>Task:</strong> ${esc(agent.current_task || 'None')}</p>
+          <p><strong>Activity:</strong> <small>${esc(agent.recent_activity || 'None')}</small></p>
         </div>
       `;
     });
@@ -141,8 +156,8 @@ function render(data) {
   const actList = document.getElementById('office-activity');
   actList.innerHTML = act.slice(0, 5).map(x => `
     <div class="act-item">
-      <strong>${x.title || x.type || 'Session Turn'}</strong>
-      <small>${x.id ? x.id.slice(0, 16) + '...' : ''} ${x.ended_at ? 'Completed' : 'Active'}</small>
+      <strong>${esc(x.title || x.type || 'Session Turn')}</strong>
+      <small>${esc(x.id ? x.id.slice(0, 16) + '...' : '')} ${x.ended_at ? 'Completed' : 'Active'}</small>
     </div>
   `).join('') || '<span class="detail-empty">No recent activity</span>';
 
@@ -151,8 +166,8 @@ function render(data) {
   const chans = (data.channels && data.channels.items) || [];
   chanList.innerHTML = chans.map(c => `
     <div class="act-item" style="border-left-color:${c.status === 'Connected' ? 'var(--green)' : 'var(--muted)'};">
-      <strong>${c.name.toUpperCase()}</strong>
-      <small>Status: ${c.status} (${c.session_count} session)</small>
+      <strong>${esc(c.name).toUpperCase()}</strong>
+      <small>Status: ${esc(c.status)} (${esc(c.session_count)} session)</small>
     </div>
   `).join('') || '<span class="detail-empty">No connected channels</span>';
 }

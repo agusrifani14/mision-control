@@ -77,38 +77,52 @@ def channels():
     value = source.get("value")
     if not source["available"]:
         return unavailable()
-    if isinstance(value, dict):
-        return {"available": True, "items": [{"name": name, "status": "Connected" if not isinstance(info, dict) or info.get("active", True) else "Offline", "session_count": info.get("sessions", 1) if isinstance(info, dict) else 1} for name, info in value.items()]}
-    return {"available": True, "items": []}
+    platforms = value.get("platforms") if isinstance(value, dict) else None
+    if not isinstance(platforms, dict):
+        return {"available": True, "items": []}
+    return {"available": True, "items": [
+        {"name": name, "status": "Connected" if isinstance(info, dict) and info.get("connected") else "Offline", "session_count": info.get("session_count", "Not Available") if isinstance(info, dict) else "Not Available"}
+        for name, info in platforms.items()
+    ]}
+
+
+def process_alive(pid):
+    if not isinstance(pid, int) or pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
 
 
 def agents():
     processes, ledger = read_json("processes.json"), read_json("spawn-ledger.json")
-    sessions = sqlite_rows("state.db", "sessions", 10)
     items, seen = [], set()
     for source in (processes.get("value"), ledger.get("value")):
         values = source if isinstance(source, list) else (source.values() if isinstance(source, dict) else [])
         for item in values:
             if not isinstance(item, dict):
                 continue
-            ident = str(item.get("name") or item.get("id") or item.get("pid") or "Hermes Worker")
+            ident = str(item.get("name") or item.get("id") or item.get("pid") or "Unknown")
             if ident in seen:
                 continue
             seen.add(ident)
             pid = item.get("pid")
-            state = "Working" if pid or item.get("status") in ("running", "active") else "Idle"
-            items.append({"name": f"Agent-{ident}", "role": item.get("role") or "Core Worker", "state": state, "room": "Workspace" if state == "Working" else "Lounge", "pid": pid, "model": item.get("model") or "custom/web1", "current_task": item.get("current_task") or "Executing runtime instructions", "recent_activity": f"PID {pid} active in background" if pid else "Standing by", "avatar": "tech_worker"})
-    if sessions["available"] and sessions["items"]:
-        session = sessions["items"][0]
-        state = "Idle" if session.get("ended_at") is not None else "Working"
-        room = "Lounge" if state == "Idle" else "Workspace"
-        model = session.get("model") or "custom"
-        title = session.get("title") or "Active Discussion"
-        items[0:0] = [
-            {"name": "Lead Agent", "role": "Mission Coordinator", "state": state, "room": room, "pid": None, "model": model, "current_task": f"Coordinating: {title}", "recent_activity": f"Session turn completed. Model: {model}", "avatar": "commander"},
-            {"name": "Lead Engineer", "role": "System Architecture & Review", "state": state, "room": room, "pid": None, "model": model, "current_task": "Mission Control & Office Runtime", "recent_activity": "Verifying Hermes data and test suite", "avatar": "engineer"},
-        ]
-    return {"available": True, "items": items}
+            alive = process_alive(pid)
+            state = "Working" if alive else "Unknown"
+            items.append({
+                "name": item.get("name") or ident,
+                "role": item.get("role") or "Not Available",
+                "state": state,
+                "room": "Workspace" if state == "Working" else "Unknown",
+                "pid": pid,
+                "model": item.get("model") or "Not Available",
+                "current_task": item.get("current_task") or "Not Available",
+                "recent_activity": item.get("recent_activity") or "Not Available",
+                "avatar": "tech_worker",
+            })
+    return {"available": bool(processes["available"] or ledger["available"]), "items": items}
 
 
 def main():

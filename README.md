@@ -34,10 +34,19 @@ MISSION_CONTROL_SMOKE_OK
 - `%LOCALAPPDATA%/hermes/memories/`: persistent memory files
 - `%LOCALAPPDATA%/hermes/channel_directory.json`: channel metadata
 
-Missing, locked, malformed, or inaccessible sources show `Not Available`; dashboard does not invent data. Agent `Working` state only appears where a real process record includes a PID/status. All other states remain `Unknown`.
+Missing, locked, malformed, or inaccessible sources show `Not Available`; dashboard does not invent data. Agent `Working` state only appears when an actual PID is alive. All other agent states remain `Unknown`.
+
+## Visual 2D Office
+
+The **Visual Office** tab has Workspace and Lounge. It renders known runtime agents only:
+
+- `Working` agents with a verified live PID appear in Workspace.
+- `Unknown` agents appear outside the active workspace; no active state is guessed.
+- Agent details, activity, and channels use the same read-only adapter.
 
 ## Limits
 
 - Polling interval: 5 seconds. No Hermes WebSocket event API is used.
 - Dashboard binds only to `127.0.0.1`.
-- Visual 2D Office intentionally not built in this MVP.
+- Local session rows and memory contents can be sensitive. Do not expose this service outside the local machine.
+- Hermes does not expose a reliable public agent state/room API here; the office deliberately uses `Unknown` when source data cannot prove state.
