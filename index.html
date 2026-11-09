@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hermes Mission Control</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="logo-dot"></span>
+        <h2>Mission Control</h2>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn active" data-tab="dashboard">Dashboard</button>
+        <button class="nav-btn" data-tab="agents">Agents</button>
+        <button class="nav-btn" data-tab="tasks">Task Board</button>
+        <button class="nav-btn" data-tab="calendar">Calendar</button>
+        <button class="nav-btn" data-tab="activity">Activity</button>
+        <button class="nav-btn" data-tab="memory">Memory</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="live-indicator"><span class="pulse"></span> LIVE 5s</div>
+        <small id="last-updated">Updating...</small>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <h1 id="page-title">Dashboard</h1>
+        <button id="refresh-btn" class="action-btn">Refresh Now</button>
+      </header>
+
+      <section id="tab-dashboard" class="tab-pane active">
+        <div class="metrics-grid">
+          <div class="card metric"><div class="label">Total Tasks</div><div class="val" id="metric-tasks">-</div></div>
+          <div class="card metric"><div class="label">Active Agents</div><div class="val" id="metric-agents">-</div></div>
+          <div class="card metric"><div class="label">Sessions</div><div class="val" id="metric-sessions">-</div></div>
+          <div class="card metric"><div class="label">Worker Executions</div><div class="val" id="metric-workers">-</div></div>
+        </div>
+        <div class="card">
+          <h3>Hermes Source Health</h3>
+          <ul id="source-health" class="health-list"></ul>
+        </div>
+      </section>
+
+      <section id="tab-agents" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><h3>Hermes Agents</h3><span id="agents-count" class="badge">0</span></div>
+          <div class="table-wrap"><table id="agents-table"><thead><tr><th>Name / ID</th><th>Role</th><th>Status</th><th>PID</th><th>Model</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="tab-tasks" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><h3>Task Board (kanban.db)</h3><span id="tasks-count" class="badge">0</span></div>
+          <div class="table-wrap"><table id="tasks-table"><thead><tr><th>ID</th><th>Title</th><th>Status</th><th>Created</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="tab-calendar" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><h3>Calendar & Scheduled Cron</h3><span id="calendar-count" class="badge">0</span></div>
+          <div class="table-wrap"><table id="calendar-table"><thead><tr><th>Name</th><th>Schedule</th><th>Next Run</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="tab-activity" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><h3>Recent Activity (state.db)</h3><span id="activity-count" class="badge">0</span></div>
+          <div class="table-wrap"><table id="activity-table"><thead><tr><th>Session / ID</th><th>Action / Type</th><th>Details</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="tab-memory" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><h3>Persistent Memory Files</h3><span id="memory-count" class="badge">0</span></div>
+          <div id="memory-list" class="memory-grid"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
