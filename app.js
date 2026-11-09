@@ -91,6 +91,70 @@ function render(data) {
       <pre>${m.content || 'Empty'}</pre>
     </div>
   `).join('') : '<div class="empty-state">No persistent memory files found in memories/</div>';
+
+  // 2D Office Render
+  const crew = data.crew_summary || { working: 0, idle: 0, offline: 0, unknown: 0 };
+  document.getElementById('office-working').textContent = crew.working;
+  document.getElementById('office-idle').textContent = crew.idle;
+  document.getElementById('office-offline').textContent = crew.offline;
+  document.getElementById('office-channels').textContent = (data.channels && data.channels.items ? data.channels.items.length : 0);
+
+  const wsZone = document.getElementById('workspace-agents');
+  const lgZone = document.getElementById('lounge-agents');
+  wsZone.innerHTML = '';
+  lgZone.innerHTML = '';
+
+  const avatarIcons = { commander: '👾', engineer: '🛠️', tech_worker: '🤖' };
+
+  agents.forEach(agent => {
+    const icon = avatarIcons[agent.avatar] || '👤';
+    const sprite = document.createElement('div');
+    sprite.className = `agent-sprite ${agent.state.toLowerCase()}`;
+    sprite.innerHTML = `
+      <div class="sprite-icon">${icon}</div>
+      <div class="sprite-name" title="${agent.name}">${agent.name}</div>
+      ${badge(agent.state)}
+    `;
+    sprite.addEventListener('click', () => {
+      document.getElementById('agent-detail').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:24px;text-align:center;">${icon}</div>
+          <h4 style="color:var(--accent);">${agent.name}</h4>
+          <p><strong>Role:</strong> ${agent.role}</p>
+          <p><strong>Status:</strong> ${badge(agent.state)}</p>
+          <p><strong>Room:</strong> ${agent.room}</p>
+          <p><strong>Model:</strong> ${agent.model || 'Unknown'}</p>
+          <p><strong>Task:</strong> ${agent.current_task || 'None'}</p>
+          <p><strong>Activity:</strong> <small>${agent.recent_activity || 'None'}</small></p>
+        </div>
+      `;
+    });
+
+    if (agent.room === 'Workspace') wsZone.appendChild(sprite);
+    else lgZone.appendChild(sprite);
+  });
+
+  if (!wsZone.children.length) wsZone.innerHTML = '<span class="detail-empty">No active agents in Workspace.</span>';
+  if (!lgZone.children.length) lgZone.innerHTML = '<span class="detail-empty">No idle agents in Lounge.</span>';
+
+  // Office Activity Feed
+  const actList = document.getElementById('office-activity');
+  actList.innerHTML = act.slice(0, 5).map(x => `
+    <div class="act-item">
+      <strong>${x.title || x.type || 'Session Turn'}</strong>
+      <small>${x.id ? x.id.slice(0, 16) + '...' : ''} ${x.ended_at ? 'Completed' : 'Active'}</small>
+    </div>
+  `).join('') || '<span class="detail-empty">No recent activity</span>';
+
+  // Connected Channels
+  const chanList = document.getElementById('office-channels-list');
+  const chans = (data.channels && data.channels.items) || [];
+  chanList.innerHTML = chans.map(c => `
+    <div class="act-item" style="border-left-color:${c.status === 'Connected' ? 'var(--green)' : 'var(--muted)'};">
+      <strong>${c.name.toUpperCase()}</strong>
+      <small>Status: ${c.status} (${c.session_count} session)</small>
+    </div>
+  `).join('') || '<span class="detail-empty">No connected channels</span>';
 }
 
 refreshBtn.addEventListener('click', loadData);

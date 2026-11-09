@@ -2,7 +2,7 @@ const assert = require('assert');
 const http = require('http');
 const { server } = require('./MissionControl');
 
-const endpoints = ['/api/data', '/api/dashboard', '/api/agents', '/api/tasks', '/api/calendar', '/api/activity', '/api/memory', '/'];
+const endpoints = ['/api/data', '/api/dashboard', '/api/agents', '/api/crew_summary', '/api/channels', '/api/tasks', '/api/calendar', '/api/activity', '/api/memory', '/'];
 function request(path) {
   return new Promise((resolve, reject) => {
     http.get(`http://127.0.0.1:4173${path}`, res => {
